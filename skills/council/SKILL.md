@@ -11,15 +11,28 @@ fixes until reviews return. If the user wants to discard the implementation
 and explore new ideas, skip fixes to code being replaced.
 
 Bring in three delegates to help with the user's request, usually for review
-or feedback. Use one strong model from each of three different providers, at
-high reasoning effort. If the user's instructions name council members, use
-those. Otherwise pick the latest flagship model from each provider, for
-example Claude Opus, GPT Sol, and Gemini Pro.
+or feedback. This fork is Claude-only, so the council is three Claude models:
+Opus, Fable, and Sonnet. If the user's instructions name council members, use
+those.
 
-In T3 Code, use `orchestrator_capabilities` to resolve the models, then
-`delegate_task` to start one delegate per model in parallel. Elsewhere, use
-the harness's subagent tools. If you cannot reach three providers, or a named
-member is unavailable, report it instead of substituting.
+Three Claude models share more blind spots than three providers would, so give
+each one a lens as well as the shared request:
+
+- **Opus: correctness.** Bugs, broken callers, wrong behavior in the intended
+  case.
+- **Fable: the user's goal.** Does the change do what was asked, and nothing
+  more? Flag scope creep and missing pieces.
+- **Sonnet: the reader.** Is it simple, idiomatic for this repo, and easy to
+  maintain? Prefer findings that delete code.
+
+Each delegate still reports anything serious outside its lens.
+
+Start them with the Agent tool, all three in one message so they run in
+parallel: `subagent_type: "general-purpose"`, `model: "opus"` / `"fable"` /
+`"sonnet"`, `run_in_background: false`. Do not use a fork; forks inherit your
+context and your conclusions. In T3 Code, use the same native Agent tool (a
+Claude child needs no `delegate_task`). If a model is unavailable, report it
+instead of substituting.
 
 Give each delegate the request and relevant context. For review or feedback,
 keep their work read-only. Collect their responses and summarize the useful
@@ -39,9 +52,9 @@ Rounds: 2
 
 | Delegate | Round 1 | Round 2 |
 | --- | --- | --- |
-| Claude Opus | 7/10 | 9/10 |
-| GPT Sol | 8/10 | 10/10 |
-| Gemini Pro | 7/10 | 9/10 |
+| Claude Opus (correctness) | 7/10 | 9/10 |
+| Claude Fable (goal) | 8/10 | 10/10 |
+| Claude Sonnet (reader) | 7/10 | 9/10 |
 ```
 
 If a delegate gives no score, write `no score`. Do not invent one.
