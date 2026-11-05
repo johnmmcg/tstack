@@ -66,6 +66,32 @@ Kill the old one only if its events do not reach you.
 With either watcher: when an event needs no action, end your turn without a
 message. Never post or say "still waiting".
 
+## Local gate (no CI on PRs)
+
+Some repos run no CI or review bots on PRs. Their CLAUDE.md or AGENTS.md says
+local checks are the merge gate instead. Then a watcher has nothing to wait
+for (`pr-wait --until green` never ends), so babysit the gate yourself:
+
+1. **Build the exact tree that will land.** Fetch, then use a worktree at the PR
+   head merged with the latest base. For a stacked PR, merge in the PRs below it
+   first.
+2. **Run the documented checks there.** Run long suites (e2e, builds) in the
+   background (`run_in_background`), and in T3 Code pass the task ID to
+   `t3_background_wait` so the thread stays in Working until they finish. Follow
+   the repo's rules on how many suites may run at once, and wait for a slot
+   rather than killing other runs.
+3. **Review stands in for the bots.** Use the `review-loop` skill on the diff.
+4. **Record the result in the PR description**: which checks passed, on which
+   head and base. Edit the description instead of posting a comment.
+5. **Run it again** after every push, and whenever the base moves and touches
+   this PR's files (`git fetch`, then
+   `git diff --name-only <old-base> origin/<base>` intersected with the PR's
+   files).
+
+Humans can still comment, so keep one watcher for news
+(`watch_pull_request` in T3 Code, `pr-wait --until any-change` elsewhere), but
+only the local gate decides whether the PR is ready.
+
 ## GitHub rate limits
 
 `gh pr create`, `gh pr view`, and `gh pr checks` use GraphQL. When GraphQL is

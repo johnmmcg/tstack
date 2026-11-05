@@ -34,8 +34,12 @@ Some skills call others. Install the ones they need too:
 
 ```bash
 git clone https://github.com/johnmmcg/tstack
-cp -R tstack/skills/* ~/.claude/skills/
+tstack/install.sh
 ```
+
+`install.sh` symlinks each skill into `~/.claude/skills`, so a `git pull` in
+the clone updates them all. It won't replace a skill you already have; pass
+`--force` to replace one that's a symlink to somewhere else.
 
 ## Requirements
 
